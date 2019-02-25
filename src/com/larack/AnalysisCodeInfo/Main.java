@@ -18,7 +18,7 @@ public class Main {
 
 //		String fromFilePath = "/Users/larack/Downloads/tt/";
 		String fromFilePath = "/Users/larack/Downloads/top100/";
-		String resultFilePath = "/Users/Shared/my_git/java/AnalysisCodeInfo/result.txt";
+		String resultFilePath = "result.txt";
 
 //		calcLanguageCh(fromFilePath, resultFilePath);// 统计汉字
 //		calcLetters(fromFilePath, resultFilePath);// 统计英文单词
@@ -43,7 +43,8 @@ public class Main {
 			throws IOException {
 		String fromFileFormat = null;
 		WordsManager wm = new WordsManager(fromFilePath, fromFileFormat, resultFilePath, searchParten, showParten);
-		wm.calc();
+//		wm.calcByTotal();
+		wm.calcBySubDir();
 	}
 
 	/**
@@ -79,7 +80,7 @@ public class Main {
 		String fromFileFormat = ".wxss";
 		WordsManager wm = new WordsManager(fromFilePath, fromFileFormat, resultFilePath,
 				PartenUtils.PARTEN_WXSS_PROPERTY, PartenUtils.PARTEN_WXSS_PROPERTY_SHOW);
-		wm.calc();
+		wm.calcBySubDir();
 	}
 
 	/**

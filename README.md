@@ -35,9 +35,20 @@ CalcWords 是一个java版本的文件内容查找、统计工具
 
 ```java
 	/**
-	 * 开始统计并保存结果
+	 * 按照sub dir来分页统计，并分开输出
+	 * 
+	 * @throws IOException
 	 */
-    public void calc()
+	public void calcBySubDir() 
+```
+
+```java
+	/**
+	 * 统计所有目录并合并输出
+	 * 
+	 * @throws IOException
+	 */
+	public void calcByTotal()
 ```
 
 3. 举例
@@ -48,7 +59,7 @@ CalcWords 是一个java版本的文件内容查找、统计工具
     String fromFileFormat = ".wxss";//读取的文件格式
 	WordsManager wm = new WordsManager(fromFilePath, fromFileFormat, resultFilePath,
         WordsManager.PARTEN_WXSS_STYLE, WordsManager.PARTEN_LETTER);
-	wm.calc();//开始统计
+	wm.calcBySubDir();//开始统计
 ```
 
 4. 输出结果

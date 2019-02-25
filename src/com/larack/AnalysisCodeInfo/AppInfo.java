@@ -3,8 +3,11 @@ package com.larack.AnalysisCodeInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
@@ -52,6 +55,38 @@ public class AppInfo {
 			resultMap.put(key, resultMap.get(key) + 1);
 			totalRecords++;
 		}
+	}
+
+	/**
+	 * 将map2添加到map1
+	 * 
+	 * @param map2
+	 * @return resultMap
+	 */
+	public TreeMap<String, Integer> mergeMap(AppInfo app2) {
+		if (null == app2 || app2.resultMap == null || app2.resultMap.size() == 0) {
+			return resultMap;
+		}
+		if (null == resultMap) {
+			resultMap = new TreeMap<String, Integer>();
+		}
+		TreeMap<String, Integer> map1 = resultMap;
+		TreeMap<String, Integer> map2 = app2.resultMap;
+
+		Set<String> keys2 = map2.keySet();
+		Iterator<String> iterator2 = keys2.iterator();
+		while (iterator2.hasNext()) {
+			String key = (String) iterator2.next();
+			if (key.equals(""))
+				continue;
+			if (map1.get(key) == null) {
+				map1.put(key, map2.get(key));
+			} else {
+				map1.put(key, map1.get(key) + map2.get(key));
+			}
+			totalRecords = map1.get(key);
+		}
+		return map1;
 	}
 
 	public List<Map.Entry<String, Integer>> getSortList() {

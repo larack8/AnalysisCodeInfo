@@ -12,10 +12,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 /**
  * 
@@ -154,9 +154,18 @@ public class WordsManager {
 	}
 
 	public void calc() throws IOException {
-		calcTotal();
+		if (appList == null || appList.size() == 0) {
+			calcByTotal();
+		} else {
+			calcBySubDir();
+		}
 	}
 
+	/**
+	 * 按照sub dir来分页统计，并分开输出
+	 * 
+	 * @throws IOException
+	 */
 	public void calcBySubDir() throws IOException {
 		calcStartTime = System.currentTimeMillis();
 		File files = new File(fromFilePath);
@@ -184,7 +193,12 @@ public class WordsManager {
 		saveResult();
 	}
 
-	public void calcTotal() throws IOException {
+	/**
+	 * 统计所有目录并合并输出
+	 * 
+	 * @throws IOException
+	 */
+	public void calcByTotal() throws IOException {
 		calcStartTime = System.currentTimeMillis();
 		File files = new File(fromFilePath);
 		if (!files.exists() || !files.canRead()) {
@@ -352,7 +366,7 @@ public class WordsManager {
 	 * 保存结果
 	 */
 	private void saveTotolResult() {
-		System.out.println(">>> 3.正在处理结果");
+		System.out.println(">>> 3.正在处理合并后的结果");
 
 		// 当分别统计的线程结束后，开始统计总数目的线程
 		new Thread(() -> {
@@ -365,6 +379,10 @@ public class WordsManager {
 			};
 
 			TreeMap<String, Integer> tMap = new TreeMap<String, Integer>();
+
+			for (int loop = 0; loop < listThread.size(); loop++) {
+				listThread.get(loop).interrupt();
+			}
 
 			// 使用TreeMap保证结果有序（按首字母排序）
 			System.out.println("# 1. 正在按首字母排序... ");
@@ -389,10 +407,6 @@ public class WordsManager {
 						tMap.put(key, tMap.get(key) + hMap.get(key));
 					}
 				}
-			}
-
-			for (int loop = 0; loop < listThread.size(); loop++) {
-				listThread.get(loop).interrupt();
 			}
 
 			if (tMap.size() <= 0) {
@@ -460,67 +474,94 @@ public class WordsManager {
 	 */
 	private void saveAppSortList() {
 		System.out.println(">>> 3.正在处理App列表");
-		Comparator<AppInfo> appDownComparator = new Comparator<AppInfo>() {
-			@Override
-			public int compare(AppInfo o1, AppInfo o2) {
-				return (int) (o2.totalRecords - o1.totalRecords);
+		new Thread(() -> {
+			for (int loop = 0; loop < listThread.size(); loop++) {
+				listThread.get(loop).interrupt();
 			}
-		};
 
-		for (int loop = 0; loop < listThread.size(); loop++) {
-			listThread.get(loop).interrupt();
-		}
+			TreeMap<String, AppInfo> hMap = new TreeMap<String, AppInfo>();
+			System.out.println("# 1. 正在按首字母排序... ");
+			for (int loop = 0; loop < listCalcWordsThreads.size(); loop++) {
+				AppInfo appInfo = listCalcWordsThreads.get(loop).getRecordResult();
+				String key = appInfo.appName;
+				if (hMap.containsKey(key)) {
+					AppInfo hAppInfo = hMap.get(key);
+					hAppInfo.resultMap = hAppInfo.mergeMap(appInfo);
+					hMap.put(key, hAppInfo);
+				} else {
+					hMap.put(key, appInfo);
+				}
 
-		List<AppInfo> alist = new ArrayList<>();
-		// 使用TreeMap保证结果有序（按首字母排序）
-		System.out.println("# 1. 正在按首字母排序... ");
-		for (int loop = 0; loop < listCalcWordsThreads.size(); loop++) {
-			AppInfo appInfo = listCalcWordsThreads.get(loop).getRecordResult();
-			alist.add(appInfo);
-		}
+			}
 
-		Collections.sort(alist, appDownComparator);
+			List<Map.Entry<String, AppInfo>> alist = new ArrayList<Map.Entry<String, AppInfo>>(hMap.entrySet());
+			if (alist.size() <= 0) {
+				System.out.println("** warning ** 总共查询了 " + totalCalcFileCount + " 个文件, 没有匹配到任何数据，程序退出 !!! ");
+				return;
+			}
 
-		if (alist.size() <= 0) {
-			System.out.println("** warning ** 总共查询了 " + totalCalcFileCount + " 个文件, 没有匹配到任何数据，程序退出 !!! ");
+			System.out.println("# 2. 正在保存到文件... ");
+
+			File fileText = new File(this.resultFilePath);
+			System.out.println("## 正在保存结果到文件中 " + fileText.getAbsolutePath());
+
+			long totalWords = getTotalWords(alist);
+
+			if (totalWords <= 0) {
+				System.out.println("** warning ** 总共查询了 " + totalCalcFileCount + " 个文件, 没有匹配到任何数据，程序退出 !!! ");
+				return;
+			}
+
+			saveResultKVtogether(alist);// 合并保存
+			saveResultKVindependent(alist);// 单独保存K/V
+
+			System.out.println("## done !! ");
+			long end = System.currentTimeMillis();
+
+			System.out.println("@@ 总结: 总共查询了 " + totalCalcFileCount + " 个文件, 创建 " + listCalcWordsThreads.size()
+					+ " 个线程, 匹配到 " + totalWords + " 个单词, 耗时 " + (end - calcStartTime) / 1000.0 + " 秒!");
 			return;
-		}
-
-		System.out.println("# 2. 正在保存到文件... ");
-
-		File fileText = new File(this.resultFilePath);
-		if (fileText.exists()) {
-			fileText.delete();
-		}
-		System.out.println("## 正在保存结果到文件中 " + fileText.getAbsolutePath());
-
-		long totalWords = getTotalWords(alist);
-
-		if (totalWords <= 0) {
-			System.out.println("** warning ** 总共查询了 " + totalCalcFileCount + " 个文件, 没有匹配到任何数据，程序退出 !!! ");
-			return;
-		}
-
-		saveResultKVtogether(alist);// 合并保存
-		saveResultKVindependent(alist);// 单独保存K/V
-
-		System.out.println("## done !! ");
-		long end = System.currentTimeMillis();
-
-		System.out.println("@@ 总结: 总共查询了 " + totalCalcFileCount + " 个文件, 创建 " + listCalcWordsThreads.size()
-				+ " 个线程, 匹配到 " + totalWords + " 个单词, 耗时 " + (end - calcStartTime) / 1000.0 + " 秒!");
-		return;
+		}).start();
 	}
 
-	public long getTotalWords(List<AppInfo> alist) {
+	/**
+	 * 将map2添加到map1
+	 * 
+	 * @param map1
+	 * @param map2
+	 * @return map1
+	 */
+	private TreeMap<String, Integer> mergeMap(TreeMap<String, Integer> map1, TreeMap<String, Integer> map2) {
+		if (null == map1 || map1.size() == 0 || null == map2 || map2.size() == 0) {
+			return map1;
+		}
+
+		Set<String> keys2 = map2.keySet();
+		Iterator<String> iterator2 = keys2.iterator();
+		while (iterator2.hasNext()) {
+			String key = (String) iterator2.next();
+			if (key.equals(""))
+				continue;
+			if (map1.get(key) == null) {
+				map1.put(key, map2.get(key));
+			} else {
+				map1.put(key, map1.get(key) + map2.get(key));
+			}
+		}
+		return map1;
+	}
+
+	public long getTotalWords(List<Map.Entry<String, AppInfo>> alist) {
 		long totalWords = 0;
-		for (AppInfo info : alist) {
-			totalWords += info.totalRecords;
+		for (Map.Entry<String, AppInfo> entry : alist) {
+			String key = entry.getKey();
+			AppInfo value = entry.getValue();
+			totalWords += value.totalRecords;
 		}
 		return totalWords;
 	}
 
-	public void saveResultKVindependent(List<AppInfo> alist) {
+	public void saveResultKVindependent(List<Map.Entry<String, AppInfo>> alist) {
 		String keyFilePath = resultFilePath + "_" + "key.txt";
 		String valueFilePath = resultFilePath + "_" + "value.txt";
 		File keyFile = new File(keyFilePath);
@@ -534,8 +575,9 @@ public class WordsManager {
 		System.out.println(
 				"## 正在分别保存Key和Value到文件中, Key:" + keyFile.getAbsolutePath() + "; Value:" + valueFile.getAbsolutePath());
 		int index = 0;
-		for (AppInfo info : alist) {
+		for (Map.Entry<String, AppInfo> entry : alist) {
 			index++;
+			AppInfo info = entry.getValue();
 			String appResult = index + ".appName:" + info.appName + "\n";
 			saveResultToFile(keyFilePath, appResult);
 			saveResultToFile(valueFilePath, appResult);
@@ -543,34 +585,35 @@ public class WordsManager {
 			if (null == list) {
 				continue;
 			}
-			for (Map.Entry<String, Integer> entry : list) {
-				String key = entry.getKey();
-				Integer value = entry.getValue();
-				saveResultToFile(keyFilePath, key + "\n");
-				saveResultToFile(valueFilePath, String.valueOf(value) + "\n");
+			for (Map.Entry<String, Integer> entry2 : list) {
+				String key2 = entry2.getKey();
+				Integer value2 = entry2.getValue();
+				saveResultToFile(keyFilePath, key2 + "\n");
+				saveResultToFile(valueFilePath, String.valueOf(value2) + "\n");
 			}
 		}
 	}
 
-	public void saveResultKVtogether(List<AppInfo> alist) {
+	public void saveResultKVtogether(List<Map.Entry<String, AppInfo>> alist) {
 		File fileText = new File(this.resultFilePath);
 		if (fileText.exists()) {
 			fileText.delete();
 		}
 		System.out.println("## 正在保存结果到文件中 " + fileText.getAbsolutePath());
 		int index = 0;
-		for (AppInfo info : alist) {
+		for (Map.Entry<String, AppInfo> entry : alist) {
 			index++;
+			AppInfo info = entry.getValue();
 			String appResult = index + ".appName:" + info.appName + "\n";
 			saveResultToFile(resultFilePath, appResult);
 			List<Map.Entry<String, Integer>> list = info.getSortList();
 			if (null == list) {
 				continue;
 			}
-			for (Map.Entry<String, Integer> entry : list) {
-				String key = entry.getKey();
-				Integer value = entry.getValue();
-				String calcResult = "\t字符:" + key + ",出现次数:" + value + "\n";
+			for (Map.Entry<String, Integer> entry2 : list) {
+				String key2 = entry2.getKey();
+				Integer value2 = entry2.getValue();
+				String calcResult = "\t字符:" + key2 + ",出现次数:" + value2 + "\n";
 //				System.out.print(calcResult);
 				saveResultToFile(resultFilePath, calcResult);
 			}
