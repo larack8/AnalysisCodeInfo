@@ -1,9 +1,9 @@
-# CalcWords
+# AnalysisCodeInfo
 
 ------
 
 ### 1. 简介
-CalcWords 是一个java版本的文件内容查找、统计工具
+AnalysisCodeInfo 是一个java版本的文件内容查找、统计工具
 
 > - [x] 支持操作超大文件，支持分片统计，支持多线程同时统计
 > - [x] 支持查找指定目录下的指定格式文件
@@ -54,8 +54,8 @@ CalcWords 是一个java版本的文件内容查找、统计工具
 3. 举例
 
 ```java
-	String fromFilePath = "/Users/Shared/my_git/java/CalcWords/testletters/"; //要读取的文件路径
-	String resultFilePath = "/Users/Shared/my_git/java/CalcWords/result.txt";//结果保存路径
+	String fromFilePath = "/Users/Shared/my_git/java/AnalysisCodeInfo/testletters/"; //要读取的文件路径
+	String resultFilePath = "/Users/Shared/my_git/java/AnalysisCodeInfo/result.txt";//结果保存路径
     String fromFileFormat = ".wxss";//读取的文件格式
 	WordsManager wm = new WordsManager(fromFilePath, fromFileFormat, resultFilePath,
         WordsManager.PARTEN_WXSS_STYLE, WordsManager.PARTEN_LETTER);
@@ -64,8 +64,8 @@ CalcWords 是一个java版本的文件内容查找、统计工具
 
 4. 输出结果
 统计结果除了在 resultFilePath 路径上保存之外，还会在同级别路径上分别保存以_key.txt结尾的key和以_value.txt结尾的value,如:
-> /Users/Shared/my_git/java/CalcWords/result.txt_key.txt
-> /Users/Shared/my_git/java/CalcWords/result.txt_value.txt
+> /Users/Shared/my_git/java/AnalysisCodeInfo/result.txt_key.txt
+> /Users/Shared/my_git/java/AnalysisCodeInfo/result.txt_value.txt
 
 ![输出结果示例](out_sample.png)
 
