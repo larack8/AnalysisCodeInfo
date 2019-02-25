@@ -58,12 +58,13 @@ AnalysisCodeInfo 是一个java版本的文件内容查找、统计工具
 	String resultFilePath = "/Users/Shared/my_git/java/AnalysisCodeInfo/result.txt";//结果保存路径
     String fromFileFormat = ".wxss";//读取的文件格式
 	WordsManager wm = new WordsManager(fromFilePath, fromFileFormat, resultFilePath,
-        WordsManager.PARTEN_WXSS_STYLE, WordsManager.PARTEN_LETTER);
+        WordsManager.PARTEN_WXSS_PROPERTY, WordsManager.PARTEN_WXSS_PROPERTY_SHOW);
 	wm.calcBySubDir();//开始统计
 ```
 
 4. 输出结果
 统计结果除了在 resultFilePath 路径上保存之外，还会在同级别路径上分别保存以_key.txt结尾的key和以_value.txt结尾的value,如:
+
 > /Users/Shared/my_git/java/AnalysisCodeInfo/result.txt_key.txt
 > /Users/Shared/my_git/java/AnalysisCodeInfo/result.txt_value.txt
 

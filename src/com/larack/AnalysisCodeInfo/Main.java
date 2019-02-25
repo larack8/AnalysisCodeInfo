@@ -16,8 +16,8 @@ public class Main {
 
 	public static void testCalcWords() throws IOException {
 
-//		String fromFilePath = "/Users/larack/Downloads/tt/";
-		String fromFilePath = "/Users/larack/Downloads/top100/";
+		String fromFilePath = "/Users/Shared/my_git/java/AnalysisCodeInfo/testletters/";
+//		String fromFilePath = "/Users/larack/Downloads/top100/";
 		String resultFilePath = "result.txt";
 
 //		calcLanguageCh(fromFilePath, resultFilePath);// 统计汉字
